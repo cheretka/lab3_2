@@ -85,4 +85,46 @@ class OrderTest {
         assertEquals(order.getOrderState(), Order.State.CONFIRMED);
     }
 
+    @Test
+    void when_ReachedThresholdOfValidHours_Expect_CancelledOrderState_And_ThrowException() {
+        endTimeCount = startTimeCount.plus(25, ChronoUnit.HOURS);
+
+        when(variableClock.instant())
+                .thenReturn(startTimeCount)
+                .thenReturn(endTimeCount);
+
+        order.submit();
+
+        assertThrows(OrderExpiredException.class, () -> order.confirm());
+        assertEquals(order.getOrderState(), Order.State.CANCELLED);
+    }
+
+    @Test
+    void when_ElapsedOneSecondAfterInvalidHours_Expect_CancelledOrderState_And_ThrowException() {
+        endTimeCount = startTimeCount.plus(25, ChronoUnit.HOURS).plus(1, ChronoUnit.SECONDS);
+
+        when(variableClock.instant())
+                .thenReturn(startTimeCount)
+                .thenReturn(endTimeCount);
+
+        order.submit();
+
+        assertThrows(OrderExpiredException.class, () -> order.confirm());
+        assertEquals(order.getOrderState(), Order.State.CANCELLED);
+    }
+
+    @Test
+    void when_ElapsedInvalidHours_Expect_CancelledOrderState_And_ThrowException() {
+        endTimeCount = startTimeCount.plus(UNVALID_PERIOD_HOURS, ChronoUnit.HOURS);
+
+        when(variableClock.instant())
+                .thenReturn(startTimeCount)
+                .thenReturn(endTimeCount);
+
+        order.submit();
+
+        assertThrows(OrderExpiredException.class, () -> order.confirm());
+        assertEquals(order.getOrderState(), Order.State.CANCELLED);
+    }
+
 }
